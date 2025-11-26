@@ -39,6 +39,15 @@ class CheckerState(object):
         self.i_need_else_stack = torch.tensor(128 * [False], dtype=torch.bool)
         self.to_close_stack = 128 * [None]
 
+    def __repr__(self):
+        return f"""state: {self.state}
+        next_mandatory: {self.next_mandatory}
+        i_need_else_stack_pos: {self.i_need_else_stack_pos}
+        to_close_stack_pos: {self.to_close_stack_pos}
+        c_deep: {self.c_deep}
+        i_need_else_stack: {self.i_need_else_stack}
+        to_close_stack:{self.to_close_stack}"""
+
     def __copy__(self):
         new_state = CheckerState(self.state, self.next_mandatory,
                                  self.i_need_else_stack_pos, self.to_close_stack_pos,
