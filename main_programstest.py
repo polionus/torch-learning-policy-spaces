@@ -1,5 +1,5 @@
 import torch
-from dsl.parser import Parser
+# from dsl.parser import Parser
 from dsl import DSL
 from vae.models.leaps_vae import LeapsVAE
 from config import Config
@@ -33,36 +33,29 @@ PROGRAMS = [
 if __name__ == '__main__':
 
     dsl = DSL.init_default_karel()
-
     device = torch.device('cpu')
+    model = LeapsVAE(dsl, device)
+
+    params = torch.load(f'params/leaps_vae_{256}.ptp', map_location=device)
+    model.load_state_dict(params, strict=False)
     
-    for size in [256]:
+    results = []
+    for i, p in enumerate(PROGRAMS):
+
+        input_program_tokens = dsl.parse_str_to_int(p)
+        input_program = torch.tensor(dsl.pad_tokens(input_program_tokens, 45))
+        # print(p)
         
-        print(f'model size: {size}')
-
-        config = Config(model_hidden_size=size)
-
-        model = LeapsVAE(dsl, device)
-
-        params = torch.load(f'output/leaps_vae_{size}/model/best_val.ptp', map_location=device)
-        model.load_state_dict(params, strict=False)
+        z = model.encode_program(input_program)
+        pred_progs = model.decode_vector(z)
+        #print(pred_progs)
         
-        results = []
-        
-        for i, p in enumerate(PROGRAMS):
+        output_program = dsl.parse_int_to_str(pred_progs[0])
+        # print(output_program)
 
-            input_program_tokens = Parser.str_to_tokens(p)
-            input_program = torch.tensor(Parser.pad_tokens(input_program_tokens, 45))
-            
-            z = model.encode_program(input_program)
-
-            pred_progs = model.decode_vector(z)
-
-            output_program = Parser.tokens_to_str(pred_progs[0])
-
-            # print('embedding space:', z.detach().cpu().numpy().tolist(), 'shape:', z.shape)
-            results.append(output_program == p)
-            print(output_program)
-        
-        print(results)
+        # print('embedding space:', z.detach().cpu().numpy().tolist(), 'shape:', z.shape)
+        results.append(output_program == p)
+        # print(output_program)
+    
+    print(results)
         
