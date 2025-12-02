@@ -150,15 +150,15 @@ class Trainer:
         
         for batch_idx, batch in enumerate(dataloader):
             batch_info = self._run_batch(batch, training)
-
+      
             self.run.track(batch_info[0], name="Total Loss")
             self.run.track(batch_info[1], name = "Progs Loss")
-            self.run.track(batch[2], name = "a_h_loss")
-            self.run.track(batch[3], name = "latent_loss")
-            self.run.track(batch[4], name = "progs_t_accuracy")
-            self.run.track(batch[5], name = "progs_s_accuracy")
-            self.run.track(batch[6], name = "a_h_t_accuracy")
-            self.run.track(batch[7], name = "a_h_s_accuracy")
+            self.run.track(batch_info[2], name = "a_h_loss")
+            self.run.track(batch_info[3], name = "latent_loss")
+            self.run.track(batch_info[4], name = "progs_t_accuracy")
+            self.run.track(batch_info[5], name = "progs_s_accuracy")
+            self.run.track(batch_info[6], name = "a_h_t_accuracy")
+            self.run.track(batch_info[7], name = "a_h_s_accuracy")
             
             batch_info_list[batch_idx] = batch_info
         
