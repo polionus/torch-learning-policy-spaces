@@ -3,8 +3,10 @@ from config import Config
 from dsl import DSL
 from logger.stdout_logger import StdoutLogger
 from vae.models import load_model
+from utils.aim_utils import get_run_config_dict
 from vae.program_dataset import make_dataloaders
 from vae.trainer import Trainer
+from aim import Run
 
 if __name__ == '__main__':
 
@@ -19,7 +21,9 @@ if __name__ == '__main__':
 
     p_train_dataloader, p_val_dataloader, _ = make_dataloaders(dsl, device)
 
-    trainer = Trainer(model)
+    run = Run(experiment=f"{Config.experiment_name}")
+    run['hparams'] = get_run_config_dict()
+    trainer = Trainer(model, run)
 
     StdoutLogger.log('Main', f'Starting trainer for model {Config.model_name}')
 

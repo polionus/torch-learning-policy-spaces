@@ -2,7 +2,9 @@ torch==1.13.1
 Pillow
 matplotlib
 h5py
-numpy
+numpy<2
 scipy
 pandas
+aim
+tyro
 tqdm

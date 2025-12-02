@@ -5,6 +5,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from config import Config
 from typing import NamedTuple
+from aim import Run
 from logger.stdout_logger import StdoutLogger
 
 from .models.base_vae import BaseVAE
@@ -23,7 +24,7 @@ class EpochReturn(NamedTuple):
 
 class Trainer:
     
-    def __init__(self, model: BaseVAE):
+    def __init__(self, model: BaseVAE, run: Run):
         self.model = model
         self.output_dir = os.path.join('output', Config.experiment_name)
         self.prog_loss_coef = Config.trainer_prog_loss_coef
@@ -34,6 +35,7 @@ class Trainer:
         self.save_each_epoch = Config.trainer_save_params_each_epoch
         self.num_epochs = Config.trainer_num_epochs
         self.device = self.model.device
+        self.run = run
         self.optimizer = torch.optim.Adam(
             filter(lambda p: p.requires_grad, self.model.parameters()),
             lr=Config.trainer_optim_lr
@@ -148,6 +150,16 @@ class Trainer:
         
         for batch_idx, batch in enumerate(dataloader):
             batch_info = self._run_batch(batch, training)
+
+            self.run.track(batch_info[0], name="Total Loss")
+            self.run.track(batch_info[1], name = "Progs Loss")
+            self.run.track(batch[2], name = "a_h_loss")
+            self.run.track(batch[3], name = "latent_loss")
+            self.run.track(batch[4], name = "progs_t_accuracy")
+            self.run.track(batch[5], name = "progs_s_accuracy")
+            self.run.track(batch[6], name = "a_h_t_accuracy")
+            self.run.track(batch[7], name = "a_h_s_accuracy")
+            
             batch_info_list[batch_idx] = batch_info
         
         epoch_info_list = np.mean(batch_info_list, axis=0)
