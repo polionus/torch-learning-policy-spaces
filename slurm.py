@@ -43,7 +43,7 @@ export UV_PROJECT_ENVIRONMENT=$SLURM_TMPDIR/env
 
 uv venv $SLURM_TMPDIR/env
 source $SLURM_TMPDIR/env/bin/activate
-uv sync --extra jax-cuda
+uv pip install -r requirements.txt
 
 
 #Important magic to make neural networks fast. Will not work with multi-threading
