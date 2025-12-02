@@ -23,7 +23,7 @@ class StdoutLogger:
             logging.FileHandler(os.path.join(output_folder, filename), mode='w')
         ]
         
-        logging.basicConfig(handlers=log_handlers, format='%(asctime)s: %(message)s', level=logging.DEBUG)
+        logging.basicConfig(handlers=log_handlers, format='%(asctime)s: %(message)s', level=logging.INFO)
         cls.logger = logging.getLogger()
         
     @classmethod
