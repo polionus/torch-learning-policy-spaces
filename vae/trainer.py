@@ -208,6 +208,6 @@ class Trainer:
                 if val_return < best_val_return:
                     best_val_return = val_return
                     StdoutLogger.log('Trainer',f'New best validation {validation_key}: {best_val_return}')
-                    parameters_path = os.path.join(self.output_dir, 'model', 'best_val.ptp')
+                    parameters_path = os.path.join(self.output_dir, 'model', f'{Config.experiment_name}-best_val.ptp')
                     torch.save(self.model.state_dict(), parameters_path)
                     StdoutLogger.log('Trainer',f'Parameters saved in {parameters_path}')
