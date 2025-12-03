@@ -140,8 +140,6 @@ def main():
     p = 'DEF run m( move turnRight move turnRight move turnRight move turnRight move turnRight m)'
     p = dsl.parse_str_to_int(p)
 
-
-
     trace_programs(dsl, model, env, p)
 
 if __name__ == "__main__":
