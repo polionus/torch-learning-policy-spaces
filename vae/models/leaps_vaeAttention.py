@@ -96,7 +96,8 @@ class LeapsVAEAttention(BaseVAE):
             token_embedding = self.token_encoder(current_tokens)
 
             #TODO: Fix size simply: This is a hack, fix later
-            token_embedding = torch.cat((token_embedding, torch.zeros(size = (token_embedding.shape[0], 1))), dim=-1)
+            fix_vector = torch.zeros(size = (token_embedding.shape[0], 1), device= self.device)
+            token_embedding = torch.cat((token_embedding, fix_vector), dim=-1)
             gru_inputs = torch.cat((token_embedding, z), dim=-1)
             gru_inputs = gru_inputs.unsqueeze(0)
             
