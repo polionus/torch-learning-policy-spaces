@@ -1,12 +1,15 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import copy
-from typing import Union
+from typing import Union, List
 import numpy as np
 
 from config import Config
 from dsl.base import Program
 from karel.world import World
+from tasks.utils import add_text_overlay
+import torch
+
 
 
 class Task(ABC):
@@ -44,15 +47,45 @@ class Task(ABC):
             if terminated or self.state.is_crashed():
                 break
         return reward
-
-    def trace_program(self, program: Program, image_name = 'trace.gif', max_steps = 50):
+    
+    def trace_program(self, program: Program, image_name = 'trace.gif', max_steps = 50, label_text = "", font_size = 14):
         from PIL import Image
         self.reset_state()
+        
         im = Image.fromarray(self.state.to_image())
         im_list = []
         for _ in program.run_generator(self.state):
             terminated, _ = self.get_reward(self.state)
-            im_list.append(Image.fromarray(self.state.to_image()))
+            frame = Image.fromarray(self.state.to_image())
+            frame = add_text_overlay(frame, label_text, font_size)
+            im_list.append(frame)
             if len(im_list) > max_steps or terminated or self.state.is_crashed():
                 break
-        im.save(image_name, save_all=True, append_images=im_list, duration=75, loop=0)
+            
+        im.save(image_name, save_all=True, append_images=im_list, duration=100, loop=0)
+
+
+    def trace_trajectory(self, state_trajectory: List[torch.Tensor], action_trajectory: List[int], image_name = 'trace.gif', max_steps = 50, label_text = "", font_size = 14):
+        
+        raise NotImplementedError('Partially implemented method. Come finish it when you need to.')
+        from PIL import Image
+        self.reset_state()
+        
+        im = Image.fromarray(self.state.to_image())
+        im_list = []
+
+        initial_state = state_trajectory[0]
+        world = World(initial_state)
+        for state, action in zip(state_trajectory, action_trajectory):
+            new_state = world.run_action(action)
+            assert new_state == state
+
+        # for _ in program.run_generator(self.state):
+        #     terminated, _ = self.get_reward(self.state)
+        #     frame = Image.fromarray(self.state.to_image())
+        #     frame = add_text_overlay(frame, label_text, font_size)
+        #     im_list.append(frame)
+        #     if len(im_list) > max_steps or terminated or self.state.is_crashed():
+        #         break
+            
+        im.save(image_name, save_all=True, append_images=im_list, duration=100, loop=0)
