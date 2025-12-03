@@ -5,6 +5,7 @@ from logger.stdout_logger import StdoutLogger
 from vae.models import load_model
 from search.latent_search import LatentSearch
 from tasks import get_task_cls
+from aim import Run
 
 
 if __name__ == '__main__':
@@ -22,9 +23,21 @@ if __name__ == '__main__':
     
     params = torch.load(Config.model_params_path, map_location=device)
     model.load_state_dict(params, strict=False)
+
+    run = Run(experiment=Config.experiment_name)
+    config = {
+        'population_size': Config.search_population_size,
+        'reduce_to_mean': Config.search_reduce_to_mean,
+        'sigma': Config.search_sigma,
+        'number_of_iterations': Config.search_number_iterations,
+        'number_of_executions': Config.search_number_executions,
+    }
+    run['hparams'] = config
     
-    searcher = LatentSearch(model, task_cls, dsl)
+    searcher = LatentSearch(model, task_cls, dsl, run)
     
+
+
     StdoutLogger.log('Main', f'Starting Latent Search with model {Config.model_name} for task {Config.env_task}')
     
     best_program, converged, num_evaluations = searcher.search()

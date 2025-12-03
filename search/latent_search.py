@@ -13,6 +13,7 @@ from logger.stdout_logger import StdoutLogger
 from tasks.task import Task
 from config import Config
 from vae.models.sketch_vae import SketchVAE
+from aim import Run
 
 
 def execute_program(program_str: str, task_envs: list[Task],
@@ -45,13 +46,14 @@ def execute_program(program_str: str, task_envs: list[Task],
 class LatentSearch:
     """Implements the CEM method from LEAPS paper.
     """
-    def __init__(self, model: BaseVAE, task_cls: type[Task], dsl: DSL):
+    def __init__(self, model: BaseVAE, task_cls: type[Task], dsl: DSL, run: Run):
         self.model = model
         if issubclass(type(self.model), SketchVAE):
             self.dsl = dsl.extend_dsl()
         else:
             self.dsl = dsl
         self.device = self.model.device
+        self.run = run
         self.population_size = Config.search_population_size
         self.elitism_rate = Config.search_elitism_rate
         self.n_elite = int(Config.search_elitism_rate * self.population_size)
@@ -67,6 +69,8 @@ class LatentSearch:
         self.output_file = os.path.join(output_dir, f'seed_{Config.model_seed}.csv')
         self.trace_file = os.path.join(output_dir, f'seed_{Config.model_seed}.gif')
         self.restart_timeout = Config.search_restart_timeout
+        self.seed = Config.search_seed
+        torch.manual_seed(self.seed)
 
 
     def init_population(self) -> torch.Tensor:
@@ -109,6 +113,7 @@ class LatentSearch:
             if r > self.best_reward:
                 self.best_reward = r
                 self.best_program = program_str
+                self.run.track(self.best_reward, name='Best Reward')
                 StdoutLogger.log('Latent Search',f'New best reward: {self.best_reward}')
                 StdoutLogger.log('Latent Search',f'New best program: {self.best_program}')
                 StdoutLogger.log('Latent Search',f'Number of evaluations: {self.num_evaluations}')
