@@ -1,6 +1,58 @@
 import torch
 import torch.nn as nn
+import math
 
+# Source - https://stackoverflow.com/a/77445896
+# Posted by Yakov Dan, modified by community. See post 'Timeline' for change history
+# Retrieved 2025-12-02, License - CC BY-SA 4.0
+
+class PositionalEncoding(nn.Module):
+
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+
+        position = torch.arange(max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+        pe = torch.zeros(max_len, 1, d_model)
+        pe[:, 0, 0::2] = torch.sin(position * div_term)
+        pe[:, 0, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Arguments:
+            x: Tensor, shape ``[seq_len, batch_size, embedding_dim]``
+        """
+        x = x.transpose(0, 1)
+        x = x + self.pe[:x.size(0)]
+        return self.dropout(x)
+
+    
+
+class TransformerEncoderLayer(nn.Module):
+    def __init__(self, input_dim, num_heads, max_seq_len):
+        super().__init__()
+        
+        # 1. The Positional Encoder
+        self.pos_encoder = PositionalEncoding(d_model=input_dim, max_len=max_seq_len)
+        
+        # 2. The Transformer Layer
+        self.transformer_layer = nn.TransformerEncoderLayer(
+            d_model=input_dim, 
+            nhead=num_heads, 
+            batch_first=True
+        )
+
+    def forward(self, x):
+        # x comes in as raw embeddings/vectors
+        
+        # ADD POSITIONS HERE
+        x = self.pos_encoder(x)
+        
+        # Then pass to transformer
+        output = self.transformer_layer(x)
+        return output
 
 # TODO: comment below is from original LEAPS: check if necessary
 # replace unmask_idx with unmask_idx2 after verifying identity

@@ -15,6 +15,7 @@ class Config:
     model_name: Annotated[str, 'Class name of the VAE model.'] = 'LeapsVAE'
     model_seed: Annotated[int, 'Seed for model initialization.'] = 1
     model_hidden_size: Annotated[int, 'Number of dimensions in VAE hidden unit.'] = 256
+    model_num_attention_heads: Annotated[int, 'Number of attention heads used in the encoder'] = 5
     model_params_path: Annotated[str, 'Path to model parameters.'] = 'params/leaps_vae_256.ptp'
     
     hierarchical_levels: Annotated[int, 'Number of levels in the hierarchical search.'] = 2
