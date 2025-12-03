@@ -2,6 +2,7 @@ from typing import Union
 from .base_vae import BaseVAE
 from .leaps_vae import LeapsVAE
 from .leaps_vaeLSTM import LeapsVAELSTM
+from .leaps_vaeAttention import LeapsVAEAttention
 from .policy_vae import PolicyVAE
 from .sketch_vae import SketchVAE
 from .double_vae import DoubleVAE
