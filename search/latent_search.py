@@ -106,6 +106,7 @@ class LatentSearch:
             results = [execute_program(p, self.task_envs, self.dsl) for p in programs_str]
         
         rewards = []
+        self.run.track(0, step=0, name = 'best reward')
         for p, num_eval, r in results:
             program_str = self.dsl.parse_node_to_str(p)
             rewards.append(r)
@@ -113,7 +114,8 @@ class LatentSearch:
             if r > self.best_reward:
                 self.best_reward = r
                 self.best_program = program_str
-                self.run.track(self.best_reward, name='Best Reward')
+                
+                self.run.track(self.best_reward, step = self.num_evaluations, name = 'best reward')
                 StdoutLogger.log('Latent Search',f'New best reward: {self.best_reward}')
                 StdoutLogger.log('Latent Search',f'New best program: {self.best_program}')
                 StdoutLogger.log('Latent Search',f'Number of evaluations: {self.num_evaluations}')
