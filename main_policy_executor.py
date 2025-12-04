@@ -5,6 +5,8 @@ from typing import List
 from vae.models.leaps_vaeLSTM import LeapsVAELSTM
 from vae.models.leaps_vaeAttention import LeapsVAEAttention
 from vae.models.leaps_vae import LeapsVAE
+from vae.models.leaps_vaeMLP import LeapsVAEMLP
+
 from functools import partial
 from tasks.empty import EmptyTask
 import numpy as np
@@ -45,34 +47,6 @@ all_tokens = ['DEF', 'run', 'm(', 'm)', 'move', 'turnRight',
               'c)', 'i(', 'i)', 'e(', 'e)', 'IF', 'IFELSE', 'ELSE', 'frontIsClear',
               'leftIsClear', 'rightIsClear', 'markersPresent', 'noMarkersPresent',
               'not', 'w(', 'w)', 'WHILE']
-
-
-def action_seq_to_tokens(act_seq: torch.Tensor) -> List[int]:
-
-    act_seq = act_seq.squeeze(0).tolist()
-    
-    tokens = []
-    token = None
-    for action in act_seq:
-        
-        if action == 0: 
-            # Move
-            token = 4
-        elif action == 1: 
-            # Turn left
-            token = 6
-        elif action == 2: 
-            # Turn Right
-            token = 5
-        elif action == 3:
-            # Pick Marker 
-            token = 7
-        elif action == 4:
-            # Pick Marker 
-            token = 8
-        tokens.append(token)
-    return tokens
-
 def extract_actions_from_tokens(tokens: List[int]) -> List[int]:
 
     raise Exception("Implementation is not right yet!")
@@ -91,7 +65,6 @@ def get_neural_policy_act_sequence(model: nn.Module, env: EmptyTask,  z: torch.T
                                 a_h = torch.zeros(size = (1, 10, 100)))
         
         # Start from:
-    
     world = env.generate_state()
     state = world.s #torch.tensor(world.s dtype = torch.float32)#
     state = torch.tensor(np.moveaxis(state, [-2,-3,-1], [-1,-2,-3]), dtype = torch.float32).unsqueeze(0).unsqueeze(0).unsqueeze(0)
@@ -114,10 +87,7 @@ def trace_programs(dsl, model, env, p: str):
 
     # Policy executor: 
     act_seq = get_neural_policy_act_sequence(model, env, z)
-    p_tokens = action_seq_to_tokens(act_seq)
-
-    program_0 = dsl.parse_int_to_node(p_tokens)
-    env.trace_program(program_0, image_name="gifs/Neuraltrace.gif", max_steps=200, label_text="Neural Policy", font_size=22)
+    env.trace_trajectory(act_seq, image_name="gifs/Neuraltrace.gif", max_steps=200, label_text="Neural Policy", font_size=22)
 
     # Run the actual program:
     program = dsl.parse_int_to_node(p)
@@ -130,14 +100,19 @@ def main():
     ### LOAD MODEL
     dsl = DSL.init_default_karel()
     device = torch.device('cpu')
-    model = LeapsVAEAttention(dsl, device)
+    model = LeapsVAE(dsl, device)
 
-    params = torch.load('output/LeapsVAETransformerMainRun/model/LeapsVAETransformerMainRun-best_val.ptp', map_location=device)
+    params = torch.load('params/leaps_vae_256.ptp', map_location=device)
     model.load_state_dict(params, strict=False)
 
     env = EmptyTask(seed = 0)
 
-    p = 'DEF run m( move turnRight move turnRight move turnRight move turnRight move turnRight m)'
+    # Playing with this input, you can see that when add a token in one position, it might appear in other positions.
+    # We need to help the model make this separation.
+
+    # Although the looping problem now disappeared, there seems to be a problem with longer length programs.
+    p = 'DEF run m( REPEAT R=12 r( move turnRight turnRight r) turnLeft move move REPEAT R=10 r( move turnLeft r) turnRight m)'
+    print(len(dsl.parse_str_to_int(p)))
     p = dsl.parse_str_to_int(p)
 
     trace_programs(dsl, model, env, p)
