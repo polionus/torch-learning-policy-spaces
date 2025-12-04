@@ -3,6 +3,9 @@ from dsl import DSL
 from karel.world import World
 from PIL import Image
 
+def convert_world_to_image(world: World, save_path: str):
+    frame = Image.fromarray(world.to_image())
+    frame.convert('RGB').save(save_path)
 
 def inspect_env(dsl:DSL, program_list: List, program_number: int, save_path_folder: str):
 
@@ -12,8 +15,7 @@ def inspect_env(dsl:DSL, program_list: List, program_number: int, save_path_fold
     for i in range(10):
         world_state = states[i, 1, :, :, :]
         world = World(world_state)
-        frame = Image.fromarray(world.to_image())
-        frame.convert('RGB').save(f'{save_path_folder}/world-{i}.jpg')
+        save_path = f'{save_path_folder}/world-{i}.jpg'
+        convert_world_to_image(world, save_path)
     print('\n' * 4)
     print(prog)
-
