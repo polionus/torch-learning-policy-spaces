@@ -6,4 +6,5 @@
 /leaps_results
 __pycache__
 /.aim
-*gif
+*.gif
+*.jpg
