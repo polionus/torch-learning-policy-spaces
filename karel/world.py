@@ -440,12 +440,20 @@ class World:
             self.crashed = True
 
     def run_action(self, action: int):
-        if action == 0: self.move()
-        elif action == 1: self.turn_left()
-        elif action == 2: self.turn_right()
-        elif action == 3: self.pick_marker()
-        elif action == 4: self.put_marker()
-        else: raise NotImplementedError()
+        if action == 0: 
+            self.move()
+        elif action == 1: 
+            self.turn_left()
+        elif action == 2: 
+            self.turn_right()
+        elif action == 3: 
+            self.pick_marker()
+        elif action == 4: 
+            self.put_marker()
+        elif action == 5:
+            return
+        else: 
+            raise NotImplementedError()
         
     def run_and_trace(self, program, image_name = 'trace.gif'):
         from PIL import Image
