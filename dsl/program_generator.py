@@ -4,8 +4,23 @@ import numpy as np
 from config import Config
 from dsl.dsl import DSL
 from dsl.production import Production
-from karel.world_generator import WorldGenerator
-from .base import *
+from karel.world_generator import WorldGenerator, EnvironmentGenerator
+from typing import Union
+from .base import (
+    # Base Types
+    Node, Program, TerminalNode, StatementNode, BoolNode, IntNode,
+    ConstIntNode, ConstBoolNode,
+    
+    # Statements / Controls
+    While, Repeat, Conjunction, If, ITE,
+    
+    # Actions
+    Move, TurnLeft, TurnRight, PickMarker, PutMarker,
+    
+    # Conditions
+    Not, FrontIsClear, LeftIsClear, RightIsClear, 
+    MarkersPresent, NoMarkersPresent
+)
 
 class ProgramGenerator:
     
@@ -16,24 +31,24 @@ class ProgramGenerator:
     bool_not_prob = 0.1
     nodes_probs = {
         StatementNode: {
-            While: 0.15,
-            Repeat: 0.03,
+            While: 0.45,
+            Repeat: 0.00,
             Conjunction: 0.5,
             If: 0.08,
             ITE: 0.04,
             Move: action_prob * 0.5,
             TurnLeft: action_prob * 0.15,
             TurnRight: action_prob * 0.15,
-            PickMarker: action_prob * 0.1,
-            PutMarker: action_prob * 0.1
+            PickMarker: action_prob * 0.2,
+            PutMarker: action_prob * 0.0
         },
         BoolNode: {
-            Not: bool_not_prob,
-            FrontIsClear: (1 - bool_not_prob) * 0.5,
-            LeftIsClear: (1 - bool_not_prob) * 0.15,
-            RightIsClear: (1 - bool_not_prob) * 0.15,
-            MarkersPresent: (1 - bool_not_prob) * 0.1,
-            NoMarkersPresent: (1 - bool_not_prob) * 0.1,
+            Not: bool_not_prob * 0,
+            FrontIsClear:  0.0,
+            LeftIsClear: 0.0,
+            RightIsClear: 0.0,
+            MarkersPresent: 1.0,
+            NoMarkersPresent: 0.0,
         },
         IntNode: {
             ConstIntNode: 1
@@ -96,24 +111,42 @@ class ProgramGenerator:
                 break
         return program
     
-    def generate_demos(self, prog: Program, world_generator: WorldGenerator, num_demos: int, max_demo_length: int,
+
+    ###TODO: Look at the generate demos function see how it is making them. Is it the trajectories? 
+    ### It's important to undertsand these.
+    def generate_demos(self, prog: Program, enviornment_generator: EnvironmentGenerator , num_demos: int, max_demo_length: int,
                        cover_all_branches: bool = True, timeout: int = 250) -> tuple[np.ndarray, np.ndarray]:
         action_nodes = set([n for n in prog.get_all_nodes()
                             if issubclass(type(n), TerminalNode)
                             and issubclass(type(n), StatementNode)])
+        
+        dsl = DSL.init_default_karel()
         n_tries = 0
+        #There is a while loop that is going to happen forever. 
         while True:
+            ## We initialize an empty list of actions and states.
             list_s_h = []
             list_a_h = []
+
+            # We create a set of seen actions to not pollute our dataset with redundant programs. 
+            # I am not sure we are doing this?
             seen_actions = set()
+
+            #While we have not finished making the number of programs for our demo:
             while len(list_a_h) < num_demos:
+                ### We can timeout if this takes too long (not sure how many iterations are going to happen.)
                 if n_tries > timeout:
                     raise Exception("Timeout while generating demos")
-                world = world_generator.generate()
+                
+                # The enviornments are now are generated as a function of the program 
+                world = enviornment_generator.generate_env(program_tokens=dsl.parse_node_to_int(prog))
+    
                 n_tries += 1
                 s_h = [world.s]
                 a_h = [self.dsl.a2i[type(None)]]
                 accepted = True
+
+                # For the given program, we generate a demonstration. s_h and a_h are one demo. list_s_h keeps all demonstrations. 
                 for a in prog.run_generator(world):
                     s_h.append(world.s)
                     a_h.append(self.dsl.a2i[type(a)])
@@ -121,12 +154,74 @@ class ProgramGenerator:
                     if len(a_h) >= max_demo_length:
                         accepted = False # Reject demos that are too long
                         break
-                if not accepted: continue
+                if not accepted: 
+                    continue
                 # Pad action history with no-op and state history with last state
                 for _ in range(max_demo_length - len(a_h)):
                     s_h.append(s_h[-1])
                     a_h.append(self.dsl.a2i[type(None)])
                 list_s_h.append(s_h)
                 list_a_h.append(a_h)
-            if cover_all_branches and len(seen_actions) != len(action_nodes): continue
+
+            # The cover all branches check makes us jump out of the while loop?
+            # What is it even doing? 
+            if cover_all_branches and len(seen_actions) != len(action_nodes): 
+                continue
+            return list_s_h, list_a_h
+        
+
+    def deprecated_generate_demos(self, prog: Program, world_generator: WorldGenerator, num_demos: int, max_demo_length: int, 
+                       cover_all_branches: bool = True, timeout: int = 250) -> tuple[np.ndarray, np.ndarray]:
+        action_nodes = set([n for n in prog.get_all_nodes()
+                            if issubclass(type(n), TerminalNode)
+                            and issubclass(type(n), StatementNode)])
+        n_tries = 0
+        #There is a while loop that is going to happen forever. 
+        while True:
+            ## We initialize an empty list of actions and states.
+            list_s_h = []
+            list_a_h = []
+
+            # We create a set of seen actions to not pollute our dataset with redundant programs. 
+            # I am not sure we are doing this?
+            seen_actions = set()
+
+            #While we have not finished making the number of programs for our demo:
+            while len(list_a_h) < num_demos:
+                ### We can timeout if this takes too long (not sure how many iterations are going to happen.)
+                if n_tries > timeout:
+                    raise Exception("Timeout while generating demos")
+                
+                # We generate a world from the template family of worlds used in the paper. 
+                # The generator doesn't even get the prog as input, so the world is not relevant to the program.
+                world = world_generator.generate()
+                # In order to make this better, we need to get the program as input to the enviornment generator. 
+                # We generate the enviornment, and then we generate the demontration for tht env. 
+                
+                n_tries += 1
+                s_h = [world.s]
+                a_h = [self.dsl.a2i[type(None)]]
+                accepted = True
+
+                # For the given program, we generate a demonstration. s_h and a_h are one demo. list_s_h keeps all demonstrations. 
+                for a in prog.run_generator(world):
+                    s_h.append(world.s)
+                    a_h.append(self.dsl.a2i[type(a)])
+                    seen_actions.add(a)
+                    if len(a_h) >= max_demo_length:
+                        accepted = False # Reject demos that are too long
+                        break
+                if not accepted: 
+                    continue
+                # Pad action history with no-op and state history with last state
+                for _ in range(max_demo_length - len(a_h)):
+                    s_h.append(s_h[-1])
+                    a_h.append(self.dsl.a2i[type(None)])
+                list_s_h.append(s_h)
+                list_a_h.append(a_h)
+
+            # The cover all branches check makes us jump out of the while loop?
+            # What is it even doing? 
+            if cover_all_branches and len(seen_actions) != len(action_nodes): 
+                continue
             return list_s_h, list_a_h

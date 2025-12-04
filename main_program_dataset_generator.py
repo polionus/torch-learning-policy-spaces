@@ -1,11 +1,10 @@
 import pickle
-import numpy as np
 
 import tqdm
-from config import Config
+from config import Config, ROOT_DIR
 from dsl import DSL
 from dsl.program_generator import ProgramGenerator
-from karel.world_generator import WorldGenerator
+from karel.world_generator import EnvironmentGenerator
 from logger.stdout_logger import StdoutLogger
 from search.sketch_sampler import SketchSampler
 from multiprocessing import pool
@@ -15,7 +14,8 @@ if __name__ == '__main__':
     dsl = DSL.init_default_karel()
     program_generator = ProgramGenerator(dsl)
     sketch_sampler = SketchSampler()
-    world_generator = WorldGenerator()
+    #world_generator = WorldGenerator()
+    environment_generator = EnvironmentGenerator(dsl)
     
     generate_demos = Config.datagen_generate_demos
     generate_sketches = Config.datagen_generate_sketches
@@ -37,11 +37,12 @@ if __name__ == '__main__':
             program = program_generator.generate_program()
             
             program_str = dsl.parse_node_to_str(program)
-            if program_str in seen_programs: continue
+            if program_str in seen_programs: 
+                continue
             
             if generate_demos:
                 try:
-                    s_h, a_h = program_generator.generate_demos(program, world_generator,
+                    s_h, a_h = program_generator.generate_demos(program, environment_generator,
                                                                 Config.data_num_demo_per_program,
                                                                 Config.data_max_demo_length)
                 except Exception: # In case a timeout occurs
@@ -92,3 +93,4 @@ if __name__ == '__main__':
             pickle.dump(sketches_dataset, f)
         with open(f'data/programs_{program_setup}_and_sketches_{sketch_setup}.pkl', 'wb') as f:
             pickle.dump(programs_and_sketches_dataset, f)
+
