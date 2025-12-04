@@ -2,7 +2,7 @@
 /env
 /output
 /test
-/weights
+/params
 /leaps_results
 __pycache__
 /.aim
