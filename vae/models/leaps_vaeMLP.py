@@ -28,10 +28,6 @@ class LeapsVAEMLP(BaseVAE):
             nn.Tanh(), self.init_(nn.Linear(self.hidden_size, self.num_program_tokens))
         )
         
-        # Input: enc(rho_i) (T), z (Z). Output: prog_out (Z).
-        self.policy_gru = nn.GRU(2 * self.hidden_size + self.num_agent_actions, self.hidden_size)
-        init_gru(self.policy_gru)
-        
         # Inputs: prog_out (Z), z (Z), enc(rho_i). Output: prob(rho_hat) (T).
         self.policy_mlp = nn.Sequential(
             self.init_(nn.Linear(2 * self.hidden_size + self.num_agent_actions, self.hidden_size)), nn.Tanh(),
@@ -129,8 +125,6 @@ class LeapsVAEMLP(BaseVAE):
         z_repeated = z.unsqueeze(1).repeat(1, demos_per_program, 1)
         z_repeated = z_repeated.view(batch_size*demos_per_program, self.hidden_size)
         
-        # gru_hidden = z_repeated.unsqueeze(0)
-        
         pred_a_h = []
         pred_a_h_logits = []
         
@@ -149,14 +143,7 @@ class LeapsVAEMLP(BaseVAE):
             
             inputs = torch.cat((z_repeated, enc_state, enc_action), dim=-1)
             
-            # gru_inputs = gru_inputs.unsqueeze(0)
-            
-            # gru_out, gru_hidden = self.policy_gru(gru_inputs, gru_hidden)
-            # gru_out = gru_out.squeeze(0)
-            
-            pred_action_logits = self.policy_mlp(inputs)
-     
-            
+            pred_action_logits = self.policy_mlp(inputs)        
             masked_action_logits = pred_action_logits + terminated_policy * mask_valid_actions
             
             current_action = self.softmax(masked_action_logits).argmax(dim=-1).view(-1, 1)
