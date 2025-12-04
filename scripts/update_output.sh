@@ -1,0 +1,1 @@
+rsync -avz ultimis@vulcan.alliancecan.ca:/home/ultimis/scratch/torch-learning-policy-spaces/output/ ./output
