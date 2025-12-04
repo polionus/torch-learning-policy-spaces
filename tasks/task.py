@@ -62,30 +62,31 @@ class Task(ABC):
             if len(im_list) > max_steps or terminated or self.state.is_crashed():
                 break
             
-        im.save(image_name, save_all=True, append_images=im_list, duration=100, loop=0)
+        im.save(image_name, save_all=True, append_images=im_list, duration=100)
 
 
-    def trace_trajectory(self, state_trajectory: List[torch.Tensor], action_trajectory: List[int], image_name = 'trace.gif', max_steps = 50, label_text = "", font_size = 14):
+    def trace_trajectory(self, action_trajectory: List[int], initial_state: World | None = None, image_name = 'trace.gif', max_steps = 50, label_text = "", font_size = 14):
         
-        raise NotImplementedError('Partially implemented method. Come finish it when you need to.')
         from PIL import Image
         self.reset_state()
         
         im = Image.fromarray(self.state.to_image())
         im_list = []
 
-        initial_state = state_trajectory[0]
-        world = World(initial_state)
-        for state, action in zip(state_trajectory, action_trajectory):
-            new_state = world.run_action(action)
-            assert new_state == state
+        if initial_state is None:
+            world = self.generate_state()
+        else:
+            world = initial_state
 
-        # for _ in program.run_generator(self.state):
-        #     terminated, _ = self.get_reward(self.state)
-        #     frame = Image.fromarray(self.state.to_image())
-        #     frame = add_text_overlay(frame, label_text, font_size)
-        #     im_list.append(frame)
-        #     if len(im_list) > max_steps or terminated or self.state.is_crashed():
-        #         break
+        action_trajectory = action_trajectory.squeeze().tolist()
+
+        for action in action_trajectory:
             
-        im.save(image_name, save_all=True, append_images=im_list, duration=100, loop=0)
+            world.run_action(action)
+            frame = Image.fromarray(world.to_image())
+            frame = add_text_overlay(frame, label_text, font_size)
+            im_list.append(frame)
+            if len(im_list) > max_steps or self.state.is_crashed():
+                break
+            
+        im.save(image_name, save_all=True, append_images=im_list, duration=100)
