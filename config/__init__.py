@@ -1,4 +1,4 @@
-from .config import Config
+from .config import Config, ROOT_DIR
 from typing import get_type_hints
 
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter

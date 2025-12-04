@@ -1,4 +1,8 @@
 from typing import Annotated
+from pathlib import Path
+
+# If you moved your config file location, you need to adjust this as well
+ROOT_DIR = Path(__file__).resolve().parent.parent
 
 class Config:
     """Class that handles the project global configuration.
@@ -39,7 +43,7 @@ class Config:
     
     datagen_num_programs: Annotated[int, 'Number of programs in dataset, used for data generation and loading.'] = 50000
     datagen_sketch_iterations: Annotated[int, 'Number of needed Top-Down iterations to reconstruct a program from its sketch'] = 3
-    datagen_generate_demos: Annotated[bool, 'If set, generates demonstrations for each program.'] = False
+    datagen_generate_demos: Annotated[bool, 'If set, generates demonstrations for each program.'] = True
     datagen_generate_sketches: Annotated[bool, 'If set, generates sketches for each program.'] = False
     
     data_class_name: Annotated[str, 'Name of program dataset class.'] = 'ProgramDataset'

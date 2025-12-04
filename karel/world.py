@@ -3,7 +3,7 @@
 import os
 import numpy as np
 
-from config import Config
+from config import Config, ROOT_DIR
 
 MAX_API_CALLS = 10000
 MAX_MARKERS_PER_SQUARE = 10
@@ -112,7 +112,8 @@ class World:
     # ----------------
     # Checks if two worlds are equal. Does a deep check.
     def __eq__(self, other: "World") -> bool:
-        if self.crashed != other.crashed: return False
+        if self.crashed != other.crashed: 
+            return False
         return (self.s == other.s).all()
 
     def __ne__(self, other: "World") -> bool:
@@ -223,8 +224,8 @@ class World:
             from PIL import Image
             files = ['agent_0', 'agent_1', 'agent_2', 'agent_3', 'blank', 'marker', 'wall']
             for f in files:
-                self.assets[f] = np.array(Image.open(os.path.join('assets', f'{f}.PNG')))
-
+                self.assets[f] = np.array(Image.open(os.path.join(ROOT_DIR, 'assets', f'{f}.PNG')))
+                
         img = np.ones((self.rows*grid_size, self.cols*grid_size))
         hero_r, hero_c, hero_d = self.get_hero_loc()
         for r in range(self.rows):
