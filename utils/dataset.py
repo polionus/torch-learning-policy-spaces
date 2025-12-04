@@ -17,5 +17,4 @@ def inspect_env(dsl:DSL, program_list: List, program_number: int, save_path_fold
         world = World(world_state)
         save_path = f'{save_path_folder}/world-{i}.jpg'
         convert_world_to_image(world, save_path)
-    print('\n' * 4)
-    print(prog)
+    print(f"Program: {prog}")
