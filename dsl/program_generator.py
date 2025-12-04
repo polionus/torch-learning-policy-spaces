@@ -143,6 +143,8 @@ class ProgramGenerator:
     
                 n_tries += 1
                 s_h = [world.s]
+
+                # Why is the first action padded to be the NOOP action?
                 a_h = [self.dsl.a2i[type(None)]]
                 accepted = True
 
@@ -157,6 +159,11 @@ class ProgramGenerator:
                 if not accepted: 
                     continue
                 # Pad action history with no-op and state history with last state
+                # This might be related to the fact that we are masking NOOPs (since they are used as padding.) But the last action 
+                # is also a NOOP, which means that it wouldn't be predicted.
+
+
+                ## This should probably be changed so that the padding is a different token.
                 for _ in range(max_demo_length - len(a_h)):
                     s_h.append(s_h[-1])
                     a_h.append(self.dsl.a2i[type(None)])
